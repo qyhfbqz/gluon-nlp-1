@@ -23,8 +23,9 @@
 __all__ = ['ActivationRegularizationLoss', 'TemporalActivationRegularizationLoss']
 
 from mxnet import nd
+from mxnet.gluon.loss import Loss
 
-class ActivationRegularizationLoss(object):
+class ActivationRegularizationLoss(Loss):
     r"""Computes Activation Regularization Loss. (alias: AR)
 
     The formulation is as below:
@@ -55,17 +56,18 @@ class ActivationRegularizationLoss(object):
         which consists of output from each time step (TNC).
 
     Outputs:
-        - **loss**: loss tensor with shape (batch_size,). Dimenions other than
+        - **loss**: loss tensor with shape (batch_size,). Dimensions other than
           batch_axis are averaged out.
     """
-    def __init__(self, alpha=0):
+    def __init__(self, alpha=0, weight=None, batch_axis=None, **kwargs):
+        super(ActivationRegularizationLoss, self).__init__(weight, batch_axis, **kwargs)
         self._alpha = alpha
 
     def __repr__(self):
-        s = 'ActivationRegularizationLoss {name} (alpha={alpha})'
-        return s.format(name=self.__class__, alpha=self._alpha)
+        s = 'ActivationRegularizationLoss (alpha={alpha})'
+        return s.format(alpha=self._alpha)
 
-    def __call__(self, states=None):
+    def hybrid_forward(self, *states):
         if not self._alpha:
             if not states:
                 means = [self._alpha * state.__pow__(2).mean()
@@ -73,7 +75,7 @@ class ActivationRegularizationLoss(object):
                 return nd.add_n(*means)
         return 0
 
-class TemporalActivationRegularizationLoss(object):
+class TemporalActivationRegularizationLoss(Loss):
     r"""Computes Temporal Activation Regularization Loss. (alias: TAR)
 
     The formulation is as below:
@@ -104,17 +106,19 @@ class TemporalActivationRegularizationLoss(object):
         which consists of output from each time step (TNC).
 
     Outputs:
-        - **loss**: loss tensor with shape (batch_size,). Dimenions other than
+        - **loss**: loss tensor with shape (batch_size,). Dimensions other than
           batch_axis are averaged out.
     """
-    def __init__(self, beta=0):
+
+    def __init__(self, beta=0, weight=None, batch_axis=None, **kwargs):
+        super(TemporalActivationRegularizationLoss, self).__init__(weight, batch_axis, **kwargs)
         self._beta = beta
 
     def __repr__(self):
-        s = 'TemporalActivationRegularizationLoss {name} (beta={beta})'
-        return s.format(name=self.__class__, beta=self._beta)
+        s = 'TemporalActivationRegularizationLoss (beta={beta})'
+        return s.format(beta=self._beta)
 
-    def __call__(self, states=None):
+    def hybrid_forward(self, *states):
         if not self._beta:
             if not states:
                 means = [self._beta * (state[1:] - state[:-1]).__pow__(2).mean()

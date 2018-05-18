@@ -46,6 +46,8 @@ import sys
 import mxnet as mx
 from mxnet import gluon, autograd
 import gluonnlp as nlp
+from utils import detach
+from utils import forward
 
 curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 sys.path.append(os.path.join(curr_path, '..', '..'))
@@ -235,14 +237,14 @@ def evaluate(data_source, batch_size, ctx=None):
         data = data.as_in_context(ctx)
         target = target.as_in_context(ctx)
         output, hidden = model(data, hidden)
-        hidden = nlp.model.detach(hidden)
+        hidden = detach(hidden)
         L = loss(output.reshape(-3, -1),
                  target.reshape(-1,))
         total_L += mx.nd.sum(L).asscalar()
         ntotal += L.size
     return total_L / ntotal
 
-def criterion(output, target, encoder_hs, dropped_encoder_hs):
+def regularized_loss(output, target, encoder_hs, dropped_encoder_hs):
     """Compute regularized (optional) loss of the language model in training mode.
 
     Parameters
@@ -265,8 +267,8 @@ def criterion(output, target, encoder_hs, dropped_encoder_hs):
         If args.beta is not zero, the standard loss is regularized with temporal activation.
     """
     l = loss(output.reshape(-3, -1), target.reshape(-1,))
-    l = l + ar_loss(dropped_encoder_hs)
-    l = l + tar_loss(encoder_hs)
+    l = l + ar_loss(*dropped_encoder_hs)
+    l = l + tar_loss(*encoder_hs)
     return l
 
 def train():
@@ -292,13 +294,13 @@ def train():
             data, target = get_batch(train_data, i, seq_len=seq_len)
             data_list = gluon.utils.split_and_load(data, context, batch_axis=1, even_split=True)
             target_list = gluon.utils.split_and_load(target, context, batch_axis=1, even_split=True)
-            hiddens = nlp.model.detach(hiddens)
+            hiddens = detach(hiddens)
             Ls = []
             L = 0
             with autograd.record():
                 for j, (X, y, h) in enumerate(zip(data_list, target_list, hiddens)):
-                    output, h, encoder_hs, dropped_encoder_hs = nlp.model.forward(model, X, h)
-                    l = criterion(output, y, encoder_hs, dropped_encoder_hs)
+                    output, h, encoder_hs, dropped_encoder_hs = forward(model, X, h)
+                    l = regularized_loss(output, y, encoder_hs, dropped_encoder_hs)
                     L = L + l.as_in_context(context[0]) / X.size
                     Ls.append(l/X.size)
                     hiddens[j] = h

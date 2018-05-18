@@ -40,6 +40,9 @@ import sys
 import mxnet as mx
 import gluonnlp as nlp
 
+from cache import CacheCell
+from utils import detach
+
 curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 sys.path.append(os.path.join(curr_path, '..', '..'))
 
@@ -115,7 +118,7 @@ ntokens = len(vocab)
 # Build the cache model
 ###############################################################################
 
-cache_cell = nlp.model.CacheCell(model, ntokens, args.window, args.theta, args.lambdas)
+cache_cell = CacheCell(model, ntokens, args.window, args.theta, args.lambdas)
 
 ###############################################################################
 # Training
@@ -179,7 +182,7 @@ def evaluate(data_source, batch_size, ctx=None):
         for out in outs:
             L += (-mx.nd.log(out)).asscalar()
         total_L += L / data.shape[1]
-        hidden = nlp.model.detach(hidden)
+        hidden = detach(hidden)
     return total_L / len(data_source)
 
 
