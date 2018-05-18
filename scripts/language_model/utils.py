@@ -17,6 +17,8 @@
 # specific language governing permissions and limitations
 # under the License.
 """Language model utilities."""
+__all__ = ['detach', 'forward']
+
 from mxnet import nd, autograd
 
 def detach(hidden):
