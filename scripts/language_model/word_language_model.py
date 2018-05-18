@@ -46,8 +46,8 @@ import sys
 import mxnet as mx
 from mxnet import gluon, autograd
 import gluonnlp as nlp
-from .utils import detach
-from .utils import forward
+from utils import detach
+from utils import forward
 
 curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 sys.path.append(os.path.join(curr_path, '..', '..'))
