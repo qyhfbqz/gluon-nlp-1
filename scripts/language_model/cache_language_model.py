@@ -40,8 +40,8 @@ import sys
 import mxnet as mx
 import gluonnlp as nlp
 
-from cache import CacheCell
-from utils import detach
+from .cache import CacheCell
+from .utils import detach
 
 curr_path = os.path.dirname(os.path.abspath(os.path.expanduser(__file__)))
 sys.path.append(os.path.join(curr_path, '..', '..'))

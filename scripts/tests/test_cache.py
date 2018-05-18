@@ -30,7 +30,7 @@ def test_cache():
     for name in language_models:
         for dataset_name in datasets:
             pretrained_lm, vocab = get_model(name, dataset_name, pretrained=True, root='tests/data/model/')
-            cache_cell = CacheCell(pretrained_lm, len(vocab), 10, 10, 0.5, 0.5)
+            cache_cell = CacheCell(pretrained_lm, len(vocab), 10, 0.5, 0.5)
             outs, word_history, cache_history, hidden = \
                 cache_cell(mx.nd.arange(10).reshape(10, 1), mx.nd.arange(10).reshape(10, 1), None, None)
             print(cache_cell)
