@@ -254,7 +254,7 @@ class BiRNN(Block):
     tie_weights : bool, default False
         Whether to tie the weight matrices of output dense layer and input embedding layer.
     """
-    def __init__(self, mode, vocab_size, embed_size, hidden_size, num_layers, dropout=0.5, tie_weights=False,
+    def __init__(self, mode, vocab_size, embed_size, hidden_size, num_layers, tie_weights=False, dropout=0.5,
                  skip_connection=False, proj_size=None, proj_clip=None, cell_clip=None, **kwargs):
         if tie_weights:
             assert embed_size == hidden_size, 'Embedding dimension must be equal to ' \

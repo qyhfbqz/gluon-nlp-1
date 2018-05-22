@@ -20,6 +20,7 @@
 __all__ = ['BiLMEncoder']
 
 import mxnet as mx
+from mxnet import gluon
 from .utils import _get_rnn_cell_clip_residual
 
 class BiLMEncoder(gluon.Block):
