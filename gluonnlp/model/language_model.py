@@ -283,7 +283,7 @@ class BiRNN(Block):
         embedding = nn.HybridSequential()
         with embedding.name_scope():
             embedding.add(nn.Embedding(self._vocab_size, self._embed_size,
-                                       weight_initializer=init.Uniform(0.1)))
+                                       weight_initializer=init.Uniform(0.1), sparse_grad=True))## TODO check sparse_grad
             if self._dropout:
                 embedding.add(nn.Dropout(self._dropout))
         return embedding
