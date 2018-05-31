@@ -50,10 +50,10 @@ class BiLMEncoder(gluon.Block):
                [getattr(self, 'backward_layer_{}'.format(layer_index)).begin_state(*args, **kwargs) for layer_index in range(self.num_layers)]
 
     def forward(self, inputs, states):
-        seq_len = inputs.shape[0] if self.char_embedding else inputs[0].shape[0]
+        seq_len = inputs[0].shape[0]
 
         if not states:
-            states_forward, states_backward = self.begin_state(batch_size=inputs.shape[1] if self.char_embedding else inputs[0].shape[1])
+            states_forward, states_backward = self.begin_state(batch_size=inputs[0].shape[1])
         else:
             states_forward, states_backward = states
 
@@ -64,7 +64,7 @@ class BiLMEncoder(gluon.Block):
             outputs_forward.append([])
             for i in range(seq_len):
                 if j == 0:
-                    output, states_forward[j] = getattr(self, 'forward_layer_{}'.format(j))(inputs[i] if self.char_embedding else inputs[0][i], states_forward[j])
+                    output, states_forward[j] = getattr(self, 'forward_layer_{}'.format(j))(inputs[0][i], states_forward[j])
                 else:
                     output, states_forward[j] = getattr(self, 'forward_layer_{}'.format(j))(outputs_forward[j-1][i], states_forward[j])
                 outputs_forward[j].append(output)
@@ -72,7 +72,7 @@ class BiLMEncoder(gluon.Block):
             outputs_backward.append([None] * seq_len)
             for i in reversed(range(seq_len)):
                 if j == 0:
-                    output, states_backward[j] = getattr(self, 'backward_layer_{}'.format(j))(inputs[i] if self.char_embedding else inputs[1][i], states_backward[j])
+                    output, states_backward[j] = getattr(self, 'backward_layer_{}'.format(j))(inputs[1][i], states_backward[j])
                 else:
                     output, states_backward[j] = getattr(self, 'backward_layer_{}'.format(j))(outputs_backward[j-1][i], states_backward[j])
                 outputs_backward[j][i] = output

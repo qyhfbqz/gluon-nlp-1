@@ -32,6 +32,7 @@ from .utils import _get_rnn_layer
 from .utils import apply_weight_drop
 from ..data.utils import _load_pretrained_vocab
 from .bilm_encoder import BiLMEncoder
+from gluonnlp.model import train
 
 
 class AWDRNN(Block):
@@ -234,7 +235,7 @@ class StandardRNN(Block):
         out = self.decoder(encoded)
         return out, state
 
-class BiRNN(Block):
+class BiRNN(train.BiRNN):
     """Standard RNN language model.
 
     Parameters
@@ -254,58 +255,15 @@ class BiRNN(Block):
     tie_weights : bool, default False
         Whether to tie the weight matrices of output dense layer and input embedding layer.
     """
-    def __init__(self, mode, vocab_size, embed_size, hidden_size, num_layers, tie_weights=False, dropout=0.5,
-                 skip_connection=False, proj_size=None, proj_clip=None, cell_clip=None, **kwargs):
+    def __init__(self, mode, vocab_size, embed_size, hidden_size, num_layers, tie_weights, dropout,
+                 skip_connection, proj_size, proj_clip, cell_clip, **kwargs):
         if tie_weights:
             assert embed_size == hidden_size, 'Embedding dimension must be equal to ' \
                                               'hidden dimension in order to tie weights. ' \
                                               'Got: emb: {}, hid: {}.'.format(embed_size,
                                                                               hidden_size)
-        super(BiRNN, self).__init__(**kwargs)
-        self._mode = mode
-        self._embed_size = embed_size
-        self._hidden_size = hidden_size
-        self._skip_connection = skip_connection
-        self._proj_size = proj_size
-        self._proj_clip = proj_clip
-        self._cell_clip = cell_clip
-        self._num_layers = num_layers
-        self._dropout = dropout
-        self._tie_weights = tie_weights
-        self._vocab_size = vocab_size
-
-        with self.name_scope():
-            self.embedding = self._get_embedding()
-            self.encoder = self._get_encoder()
-            self.decoder = self._get_decoder()
-
-    def _get_embedding(self):
-        embedding = nn.HybridSequential()
-        with embedding.name_scope():
-            embedding.add(nn.Embedding(self._vocab_size, self._embed_size,
-                                       weight_initializer=init.Uniform(0.1), sparse_grad=True))## TODO check sparse_grad
-            if self._dropout:
-                embedding.add(nn.Dropout(self._dropout))
-        return embedding
-
-    def _get_encoder(self):
-        return BiLMEncoder(mode=self._mode, num_layers=self._num_layers, input_size=self._embed_size,
-                              hidden_size=self._hidden_size, proj_size=self._proj_size, dropout=self._dropout,
-                              skip_connection=self._skip_connection,
-                              cell_clip=self._cell_clip, proj_clip=self._proj_clip)
-
-    def _get_decoder(self):
-        output = nn.HybridSequential()
-        with output.name_scope():
-            if self._tie_weights:
-                output.add(nn.Dense(self._vocab_size, flatten=False,
-                                    params=self.embedding[0].params))
-            else:
-                output.add(nn.Dense(self._vocab_size, flatten=False))
-        return output
-
-    def begin_state(self, *args, **kwargs):
-        return self.encoder.begin_state(*args, **kwargs)
+        super(BiRNN, self).__init__(mode, vocab_size, embed_size, hidden_size, num_layers, tie_weights, dropout,
+                 skip_connection, proj_size, proj_clip, cell_clip, **kwargs)
 
     def forward(self, inputs, begin_state=None): # pylint: disable=arguments-differ
         """Defines the forward computation. Arguments can be either
@@ -355,15 +313,8 @@ class BiRNN(Block):
         encoded = self.embedding(inputs[0]), self.embedding(inputs[1])
 
         if not begin_state:
-            ## TODO: check shape
             begin_state = self.begin_state(inputs[0].shape[1])
-        ## TODO: check state output
-        out_states = []
-        encoded_raw = []
-        encoded_dropped = []
-
         encoded, state = self.encoder(encoded, begin_state)
-        encoded_raw.append(encoded)
 
         if self._dropout:
             encoded_forward = nd.Dropout(encoded[0][-1], p=self._dropout)
@@ -375,7 +326,7 @@ class BiRNN(Block):
         forward_out = self.decoder(encoded_forward)
         backward_out = self.decoder(encoded_backward)
 
-        return (forward_out, backward_out), state, encoded_raw, encoded_dropped
+        return (forward_out, backward_out), state
 
 
 def _load_vocab(dataset_name, vocab, root):
