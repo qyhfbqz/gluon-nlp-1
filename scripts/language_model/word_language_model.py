@@ -131,9 +131,9 @@ train_dataset, val_dataset, test_dataset = \
 vocab = nlp.Vocab(counter=nlp.data.Counter(train_dataset[0]), padding_token=None, bos_token=None)
 
 train_data = train_dataset.batchify(vocab, args.batch_size)
-val_batch_size = args.batch_size
+val_batch_size = 10
 val_data = val_dataset.batchify(vocab, val_batch_size)
-test_batch_size = args.batch_size
+test_batch_size = 1
 test_data = test_dataset.batchify(vocab, test_batch_size)
 
 if args.test_mode:
@@ -155,18 +155,19 @@ ntokens = len(vocab)
 
 if args.weight_dropout > 0:
     print('Use AWDRNN')
-    model = nlp.model.train.AWDRNN(args.model, len(vocab), args.emsize, args.nhid, args.nlayers,
-                                   args.tied, args.dropout, args.weight_dropout,
-                                   args.dropout_h, args.dropout_i, args.dropout_e)
+    # model = nlp.model.train.AWDRNN(args.model, len(vocab), args.emsize, args.nhid, args.nlayers,
+    #                                args.tied, args.dropout, args.weight_dropout,
+    #                                args.dropout_h, args.dropout_i, args.dropout_e)
     model_eval = nlp.model.AWDRNN(args.model, len(vocab), args.emsize, args.nhid, args.nlayers,
                                   args.tied, args.dropout, args.weight_dropout,
                                   args.dropout_h, args.dropout_i, args.dropout_e)
 else:
-    model = nlp.model.train.StandardRNN(args.model, len(vocab), args.emsize,
-                                        args.nhid, args.nlayers, args.dropout, args.tied)
+    # model = nlp.model.train.StandardRNN(args.model, len(vocab), args.emsize,
+    #                                     args.nhid, args.nlayers, args.dropout, args.tied)
     model_eval = nlp.model.StandardRNN(args.model, len(vocab), args.emsize,
                                        args.nhid, args.nlayers, args.dropout, args.tied)
 
+model = super(model_eval.__class__, model_eval)
 model.initialize(mx.init.Xavier(), ctx=context)
 
 if args.optimizer == 'sgd':
@@ -356,7 +357,7 @@ def train():
             L = 0
             with autograd.record():
                 for j, (X, y, h) in enumerate(zip(data_list, target_list, hiddens)):
-                    output, h, encoder_hs, dropped_encoder_hs = model(X, h)
+                    output, h, encoder_hs, dropped_encoder_hs = model.forward(X, h)
                     l = joint_loss(output, y, encoder_hs, dropped_encoder_hs)
                     L = L + l.as_in_context(context[0]) / X.size
                     Ls.append(l/X.size)
