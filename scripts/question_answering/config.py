@@ -32,7 +32,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--use_gpu', type=bool, default=True,
                     help='Whether use gpu for train and eval.')
 parser.add_argument('--gpu_list', type=str,
-                    default='1', help='List of gpu index.')
+                    default='0', help='List of gpu index.')
 parser.add_argument('--prefix_model', type=str, default='model_',
                     help='The prefix name for model saving.')
 parser.add_argument('--prefix_trainer', type=str, default='trainer_',
@@ -90,17 +90,17 @@ parser.add_argument('--PAD', type=int, default=0,
 # hyperparameters for QANet
 parser.add_argument('--word_emb_dim', type=int, default=300,
                     help='The dimensions of word embedding, default is 300.')
-parser.add_argument('--char_emb_dim', type=int, default=64,
-                    help='The dimensions of word embedding, default is 64.')
+parser.add_argument('--char_emb_dim', type=int, default=200,
+                    help='The dimensions of word embedding, default is 200.')
 parser.add_argument('--character_corpus', type=int, default=1372+2,
                     help='The size of character corpus, default is 1374. ')
 parser.add_argument('--word_corpus', type=int, default=86822+2,
                     help='The size of word corpus, default is 86824. ')
 parser.add_argument('--highway_layers', type=int, default=2,
                     help='The layers of highway, default is 2.')
-parser.add_argument('--char_conv_filters', type=tuple, default=(25, 50, 75, 100, 125, 150),
+parser.add_argument('--char_conv_filters', type=tuple, default=(25, 50, 75, 100),
                     help='default set of char conv filters\' size')
-parser.add_argument('--char_conv_ngrams', type=tuple, default=(1, 2, 3, 4, 5, 6),
+parser.add_argument('--char_conv_ngrams', type=tuple, default=(1, 2, 3, 4),
                     help='default set of char conv filters\' size')
 
 
